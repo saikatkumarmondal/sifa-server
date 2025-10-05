@@ -17,8 +17,17 @@ app.use(
     credentials: true, // allow cookies/authorization headers if you use them
   })
 );
+
 app.use(express.json());
 // Serve uploaded images
+
+// 1. Point Express to your React build folder
+app.use(express.static(path.join(__dirname, "dist")));
+
+// 2. For any GET request not handled by your API, serve the React app's index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/", authRouter);
 app.use("/", categoryRoute);
