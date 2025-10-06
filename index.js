@@ -12,7 +12,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend URL
+    origin: "http://148.66.154.205", // frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"], // allow all used HTTP methods
     credentials: true, // allow cookies/authorization headers if you use them
   })
