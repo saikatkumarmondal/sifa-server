@@ -24,12 +24,12 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/", authRouter);
 app.use("/", categoryRoute);
-// ✅ Serve React static build folder
-app.use(express.static(path.join(__dirname, "dist")));
+// ✅ Serve static files from React build
+app.use(express.static(path.join(__dirname, "../client/dist")));
 
 // ✅ Fallback for SPA routing (React Router)
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
 });
 connectDB()
   .then(() => {
