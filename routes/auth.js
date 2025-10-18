@@ -45,62 +45,63 @@ authRouter.post("/signup", async (req, res) => {
 //login
 authRouter.post("/login", async (req, res) => {
   const { emailId, password } = req.body;
-
   try {
-    signupDataValidation(req);
-    if (!emailId || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
     const user = await User.findOne({ emailId });
-    if (!user) {
+    if (!user)
       return res.status(400).json({ error: "Invalid email or password" });
-    }
-    // Compare password
+
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!isMatch)
       return res.status(400).json({ error: "Invalid email or password" });
-    }
-    // Generate JWT
+
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || "gfdhjfdsgjfdsgjgjfdggjfa983468468",
+      process.env.JWT_SECRET || "secret",
       { expiresIn: "1d" }
     );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax", // "none" if HTTPS
+      secure: false, // true if HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
     res.status(200).json({
       message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        emailId: user.emailId,
-        role: user.role,
-      },
+      user: { id: user._id, emailId: user.emailId, role: user.role },
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+//logout
+authRouter.post("/logout", (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+    });
+    res.status(200).json({ message: "Logout successful" });
+  } catch (err) {
+    res.status(500).json({ error: "Logout failed" });
+  }
+});
 authRouter.get("/all", async (req, res) => {
   const users = await User.find({});
   res.send(users);
 });
 
 //GET current logged-in user
+// GET /auth/me
 authRouter.get("/me", verifyToken, async (req, res) => {
-  try {
-    // req.user is set by verifyToken middleware
-    const user = req.user;
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Send user data
-    res.status(200).json(user);
-  } catch (err) {
-    console.error("Error fetching user:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({
+    id: req.user._id,
+    emailId: req.user.emailId,
+    role: req.user.role,
+  });
 });
 
 // GET all users

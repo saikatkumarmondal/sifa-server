@@ -4,13 +4,8 @@ const User = require("../database/user");
 
 const verifyToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const token = authHeader.split(" ")[1];
+    // ✅ Get token from cookie
+    const token = req.cookies?.token;
 
     if (!token) {
       return res.status(401).json({ message: "Not authenticated" });
@@ -20,11 +15,13 @@ const verifyToken = async (req, res, next) => {
       token,
       process.env.JWT_SECRET || "gfdhjfdsgjfdsgjgjfdggjfa983468468"
     );
-    const user = await User.findById(decoded.userId).exec();
+
+    const user = await User.findById(decoded.userId).select("-password").exec();
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    req.user = user;
+
+    req.user = user; // attach user to request
     next();
   } catch (err) {
     console.error("JWT verification error:", err);

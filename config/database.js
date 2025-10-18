@@ -2,18 +2,20 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(
-      "mongodb://127.0.0.1:27017/sifa_db", // VPS MongoDB URL
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
-    );
-    console.log("✅ MongoDB connected successfully");
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error.message);
-    process.exit(1); // Exit process if DB connection fails
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`✅ MongoDB connected to DB: ${conn.connection.name}`);
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
+    //process.exit(1);
   }
 };
 
 module.exports = connectDB;
+
+//3K9N1Sq3u4e9y60p
+//sifa
+// vps mongodb url
+//  "mongodb://127.0.0.1:27017/sifa",
