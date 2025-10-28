@@ -5,6 +5,7 @@ const SparePart = require("../database/spareparts");
 const upload = require("../middlewares/upload");
 const fs = require("fs");
 const path = require("path");
+const Spareparts = require("../database/spareparts");
 
 // Helper to delete a file
 const deleteFile = (filename) => {
@@ -22,7 +23,18 @@ const buildTree = (categories, parentId = null) => {
       children: buildTree(categories, cat._id),
     }));
 };
+// ♻️ Recursive arrow function to get all subcategory IDs
+const getAllSubCategoryIds = async (categoryId) => {
+  const subCategories = await Category.find({ parentId: categoryId });
+  let allIds = subCategories.map((cat) => cat._id);
 
+  for (const sub of subCategories) {
+    const subIds = await getAllSubCategoryIds(sub._id);
+    allIds = [...allIds, ...subIds];
+  }
+
+  return allIds;
+};
 // POST: Create new category
 categoryRouter.post("/", upload.single("image"), async (req, res) => {
   try {
@@ -41,6 +53,30 @@ categoryRouter.post("/", upload.single("image"), async (req, res) => {
   } catch (err) {
     console.error("Failed to create category:", err);
     res.status(500).json({ error: "Failed to create category" });
+  }
+});
+
+categoryRouter.get("/:categoryId", async (req, res) => {
+  const { categoryId } = req.params;
+
+  try {
+    const subCategoryIds = await getAllSubCategoryIds(categoryId);
+    const allCategoryIds = [categoryId, ...subCategoryIds];
+
+    const spareParts = await Spareparts.find({
+      categoryId: { $in: allCategoryIds },
+    });
+
+    if (!spareParts.length) {
+      return res.status(404).json({
+        message: "No spare parts found for this category or its subcategories.",
+      });
+    }
+
+    res.status(200).json(spareParts);
+  } catch (error) {
+    console.error("❌ Error fetching spare parts:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
@@ -84,9 +120,9 @@ categoryRouter.put("/:id", upload.single("image"), async (req, res) => {
 });
 
 // GET: Fetch all spare parts for a category (including subcategories)
-categoryRouter.get("/:id/spareparts", async (req, res) => {
+categoryRouter.get("/:categoryId/spareparts", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { categoryId } = req.params;
 
     // Fetch all categories
     const categories = await Category.find().lean();
@@ -103,7 +139,7 @@ categoryRouter.get("/:id/spareparts", async (req, res) => {
       return ids;
     };
 
-    const allCategoryIds = getAllCategoryIds(id);
+    const allCategoryIds = getAllCategoryIds(categoryId);
 
     // Find all spare parts that belong to any of those categories
     const spareParts = await SparePart.find({
@@ -112,10 +148,8 @@ categoryRouter.get("/:id/spareparts", async (req, res) => {
       .populate("categoryId", "name")
       .lean();
 
-    if (!spareParts.length)
-      return res.status(404).json({ message: "No spare parts found" });
-
-    res.json(spareParts);
+    // Always return array (empty if none found)
+    res.json(spareParts || []);
   } catch (err) {
     console.error("Failed to fetch spare parts by category:", err);
     res.status(500).json({ error: "Failed to fetch spare parts" });

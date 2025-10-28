@@ -30,12 +30,12 @@ app.use("/spare-parts", sparePartsRouter);
 app.use("/auth", authRouter);
 
 // Serve React build (optional)
-// app.use(express.static(path.join(__dirname, "../client/dist")));
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
-// });
+app.use(express.static(path.join(__dirname, "../client/dist")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
+});
 
-// Connect DB and start server
+//Connect DB and start server
 
 connectDB()
   .then(async () => {
