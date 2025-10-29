@@ -9,39 +9,43 @@ const categoryRoute = require("./routes/categoryRouter");
 const sparePartsRouter = require("./routes/sparePartsRouter");
 const category = require("./database/category");
 require("dotenv").config();
+
 const PORT = process.env.PORT || 7777;
 const app = express();
 
+// Middleware
 app.use(
   cors({
-    origin: ["http://148.66.154.205:7777", "*"], // frontend URL
+    origin: ["http://148.66.154.205:7777"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 app.use(cookieParser());
 app.use(express.json());
+
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Mount routes without /api/
+// API routes
+app.use("/auth", authRouter);
 app.use("/categories", categoryRoute);
 app.use("/spare-parts", sparePartsRouter);
-app.use("/auth", authRouter);
 
-// Serve React build (optional)
-app.use(express.static(path.join(__dirname, "../client/dist")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
+// Serve React frontend
+const distPath = path.join(__dirname, "client", "dist");
+app.use(express.static(distPath));
+
+// ✅ SPA fallback (works with new path-to-regexp)
+app.get("/*(.*)", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
 });
 
-//Connect DB and start server
-
+// Connect DB and start server
 connectDB()
   .then(async () => {
     console.log("Database connected...");
 
-    // ✅ Only insert after connection
     try {
       const cat = await category.create({ name: "test" });
       console.log("Category inserted:", cat);
@@ -49,7 +53,6 @@ connectDB()
       console.error("Failed to insert category:", err.message);
     }
 
-    // Start server
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
