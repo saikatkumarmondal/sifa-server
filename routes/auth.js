@@ -60,16 +60,17 @@ authRouter.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // Send cookie with proper options for cross-site login
     res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax", // "none" if HTTPS
-      secure: false, // true if HTTPS
+      httpOnly: true, // not accessible via JS
+      sameSite: "lax", // allow cross-site requests
+      secure: false, // must use HTTPS
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-
     res.status(200).json({
       message: "Login successful",
       user: { id: user._id, emailId: user.emailId, role: user.role },
+      token: token,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
