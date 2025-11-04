@@ -29,73 +29,66 @@ const getAllChildCategoryIds = async (parentId) => {
 };
 
 // POST: Create spare part with images
-sparePartsRouter.post("/", (req, res) => {
-  upload.any()(req, res, async (err) => {
-    if (err) {
-      return res
-        .status(400)
-        .json({ error: err.message || "File upload error" });
-    }
+sparePartsRouter.post("/", upload.array("images"), async (req, res) => {
+  try {
+    const {
+      name,
+      brand,
+      partType,
+      material,
+      dimensions,
+      installSize,
+      faceplateSize,
+      weight,
+      application,
+      warrantyTime,
+      certificates,
+      moq,
+      shippingTerms,
+      paymentTerms,
+      paymentCurrency,
+      packing,
+      deliveryTime, // updated from description
+      categoryId,
+    } = req.body;
 
-    try {
-      const {
-        name,
-        brand,
-        partType,
-        material,
-        dimensions,
-        installSize,
-        faceplateSize,
-        weight,
-        application,
-        warrantyTime,
-        certificates,
-        moq,
-        shippingTerms,
-        paymentTerms,
-        paymentCurrency,
-        packing,
-        description,
-        categoryId,
-      } = req.body;
+    // Convert uploaded files to URLs
+    const images =
+      req.files && req.files.length > 0
+        ? req.files.map((file) => `/uploads/${file.filename}`)
+        : [];
 
-      // Filter only image files that were accepted
-      const images =
-        req.files && req.files.length > 0
-          ? req.files.map((file) => file.filename)
-          : [];
-      const image = images.length > 0 ? images[0] : null;
+    const image = images.length > 0 ? images[0] : null;
 
-      const sparePart = new SparePart({
-        name,
-        brand,
-        partType,
-        material,
-        dimensions,
-        installSize,
-        faceplateSize,
-        weight,
-        application,
-        warrantyTime,
-        certificates,
-        moq,
-        shippingTerms,
-        paymentTerms,
-        paymentCurrency,
-        packing,
-        description,
-        categoryId,
-        images,
-        image,
-      });
+    const sparePart = new SparePart({
+      name,
+      brand,
+      partType,
+      material,
+      dimensions,
+      installSize,
+      faceplateSize,
+      weight,
+      application,
+      warrantyTime,
+      certificates,
+      moq,
+      shippingTerms,
+      paymentTerms,
+      paymentCurrency,
+      packing,
+      deliveryTime,
+      categoryId,
+      images,
+      image,
+    });
 
-      const saved = await sparePart.save();
-      res.status(201).json(saved);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Failed to create spare part" });
-    }
-  });
+    const saved = await sparePart.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create spare part" });
+  }
 });
 
 // Get all Spare Parts Using

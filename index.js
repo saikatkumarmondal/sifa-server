@@ -14,14 +14,15 @@ const PORT = process.env.PORT || 7777;
 const app = express();
 
 // Middleware
+// ✅ Enable CORS for all routes (or you can restrict to your frontend URL)
 app.use(
   cors({
-    origin: ["http://148.66.154.205:7777"],
+    origin: "http://localhost:5173", // frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    credentials: true, // if you use cookies/auth
   })
 );
-app.use(cookieParser());
+
 app.use(express.json());
 
 // Serve uploaded files
@@ -32,14 +33,14 @@ app.use("/auth", authRouter);
 app.use("/categories", categoryRoute);
 app.use("/spare-parts", sparePartsRouter);
 
-// Serve React frontend
-const distPath = path.join(__dirname, "client", "dist");
-app.use(express.static(distPath));
+// // Serve React frontend
+// const distPath = path.join(__dirname, "client", "dist");
+// app.use(express.static(distPath));
 
-// ✅ SPA fallback (works with new path-to-regexp)
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
-});
+// // ✅ SPA fallback (works with new path-to-regexp)
+// app.get("/*", (req, res) => {
+//   res.sendFile(path.join(distPath, "index.html"));
+// });
 
 // Connect DB and start server
 connectDB()
