@@ -17,9 +17,13 @@ const app = express();
 // ✅ Enable CORS for all routes (or you can restrict to your frontend URL)
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend URL
+    origin: [
+      "http://localhost:5173", // local frontend
+      "http://148.66.154.205:7777", // GoDaddy IP (if testing frontend there)
+      "http://nbsifa.com", // production domain
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, // if you use cookies/auth
+    credentials: true,
   })
 );
 
@@ -33,14 +37,14 @@ app.use("/auth", authRouter);
 app.use("/categories", categoryRoute);
 app.use("/spare-parts", sparePartsRouter);
 
-// // Serve React frontend
-// const distPath = path.join(__dirname, "client", "dist");
-// app.use(express.static(distPath));
+// Serve React frontend
+const distPath = path.join(__dirname, "client", "dist");
+app.use(express.static(distPath));
 
-// // ✅ SPA fallback (works with new path-to-regexp)
-// app.get("/*", (req, res) => {
-//   res.sendFile(path.join(distPath, "index.html"));
-// });
+// ✅ SPA fallback (works with new path-to-regexp)
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
+});
 
 // Connect DB and start server
 connectDB()
