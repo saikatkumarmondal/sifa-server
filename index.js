@@ -14,13 +14,12 @@ const PORT = process.env.PORT || 7777;
 const app = express();
 
 // Middleware
-// ✅ Enable CORS for all routes (or you can restrict to your frontend URL)
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // local frontend
-      "http://148.66.154.205:7777", // GoDaddy IP (if testing frontend there)
-      "http://nbsifa.com", // production domain
+      "http://localhost:5173",
+      "http://148.66.154.205:7777",
+      "https://nbsifa.com",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -28,6 +27,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -37,11 +37,11 @@ app.use("/auth", authRouter);
 app.use("/categories", categoryRoute);
 app.use("/spare-parts", sparePartsRouter);
 
-// Serve React frontend
+// Serve React frontend in production
 const distPath = path.join(__dirname, "client", "dist");
 app.use(express.static(distPath));
 
-// ✅ SPA fallback (works with new path-to-regexp)
+// SPA fallback: serve index.html for any unknown route (React routing)
 app.get("/*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
@@ -51,6 +51,7 @@ connectDB()
   .then(async () => {
     console.log("Database connected...");
 
+    // Optional: insert test category if needed
     try {
       const cat = await category.create({ name: "test" });
       console.log("Category inserted:", cat);
