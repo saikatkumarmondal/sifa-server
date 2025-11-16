@@ -37,15 +37,6 @@ app.use("/auth", authRouter);
 app.use("/categories", categoryRoute);
 app.use("/spare-parts", sparePartsRouter);
 
-// Serve React frontend in production
-const distPath = path.join(__dirname, "client", "dist");
-app.use(express.static(distPath));
-
-// SPA fallback: serve index.html for any unknown route (React routing)
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
-});
-
 // Connect DB and start server
 connectDB()
   .then(async () => {

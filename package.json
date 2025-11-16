@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js",
-    "build": "cd client && npm install && npm run build && cd .."
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm install && npm run build",
+    "postinstall": "npm run build"
   },
   "keywords": [],
   "author": "",
