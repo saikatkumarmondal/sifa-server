@@ -21,7 +21,7 @@ const SparePartSchema = new mongoose.Schema(
     packing: { type: String },
     images: { type: [String], default: [] },
     image: { type: String, default: null },
-    description: { type: String },
+    deliveryTime: { type: String },
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",

@@ -4,20 +4,21 @@ const jwt = require("jsonwebtoken");
 const { signupDataValidation } = require("../validation/validation");
 const User = require("../database/user");
 const verifyToken = require("../middlewares/verifyToken");
+
 const authRouter = express.Router();
-// signup
+
+// -------------------- SIGNUP --------------------
 authRouter.post("/signup", async (req, res) => {
   try {
-    signupDataValidation(req); // make sure this doesn't throw an error
+    signupDataValidation(req); // validate request
 
     const { emailId, password } = req.body;
 
-    // check required fields
     if (!emailId || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Check if user already exists
+    // Check if user exists
     const existingUser = await User.findOne({ emailId });
     if (existingUser) {
       return res.status(400).json({ error: "User already exists" });
@@ -31,20 +32,22 @@ authRouter.post("/signup", async (req, res) => {
       emailId,
       password: hashedPassword,
     });
+
     await newUser.save();
 
     res
       .status(201)
       .json({ message: "User created successfully", userId: newUser._id });
   } catch (error) {
-    console.log("Signup error:", error); // log error for debugging
+    console.log("Signup error:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-//login
+// -------------------- LOGIN --------------------
 authRouter.post("/login", async (req, res) => {
   const { emailId, password } = req.body;
+
   try {
     const user = await User.findOne({ emailId });
     if (!user)
@@ -60,24 +63,26 @@ authRouter.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // Send cookie with proper options for cross-site login
+    // Send token as cookie
     res.cookie("token", token, {
-      httpOnly: true, // not accessible via JS
-      sameSite: "lax", // allow cross-site requests
-      secure: false, // must use HTTPS
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false, // change to true in production with HTTPS
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
+
     res.status(200).json({
       message: "Login successful",
       user: { id: user._id, emailId: user.emailId, role: user.role },
       token: token,
     });
   } catch (err) {
+    console.log("Login error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-//logout
+// -------------------- LOGOUT --------------------
 authRouter.post("/logout", (req, res) => {
   try {
     res.clearCookie("token", {
@@ -90,24 +95,28 @@ authRouter.post("/logout", (req, res) => {
     res.status(500).json({ error: "Logout failed" });
   }
 });
-authRouter.get("/all", async (req, res) => {
-  const users = await User.find({});
-  res.send(users);
-});
 
-//GET current logged-in user
-// GET /auth/me
+// -------------------- GET CURRENT USER --------------------
 authRouter.get("/me", verifyToken, async (req, res) => {
-  res.status(200).json({
-    id: req.user._id,
-    emailId: req.user.emailId,
-    role: req.user.role,
-  });
+  try {
+    res.status(200).json({
+      id: req.user._id,
+      emailId: req.user.emailId,
+      role: req.user.role,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get user info" });
+  }
 });
 
-// GET all users
+// -------------------- GET ALL USERS --------------------
 authRouter.get("/all", async (req, res) => {
-  const users = await User.find({});
-  res.send(users);
+  try {
+    const users = await User.find({});
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
 });
+
 module.exports = authRouter;

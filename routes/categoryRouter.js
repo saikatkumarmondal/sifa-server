@@ -124,32 +124,36 @@ categoryRouter.get("/:categoryId/spareparts", async (req, res) => {
   try {
     const { categoryId } = req.params;
 
-    // Fetch all categories
     const categories = await Category.find().lean();
 
-    // Recursive function to get all descendant category IDs
-    const getAllCategoryIds = (categoryId) => {
+    const getAllCategoryIds = (id) => {
+      let ids = [id];
       const children = categories.filter(
-        (cat) => String(cat.parentId) === String(categoryId)
+        (cat) => String(cat.parentId || "") === String(id)
       );
-      let ids = [categoryId];
       for (let child of children) {
-        ids = ids.concat(getAllCategoryIds(child._id));
+        ids = ids.concat(getAllCategoryIds(String(child._id)));
       }
       return ids;
     };
 
     const allCategoryIds = getAllCategoryIds(categoryId);
 
-    // Find all spare parts that belong to any of those categories
+    const mongoose = require("mongoose");
+    const objectIds = allCategoryIds.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+
     const spareParts = await SparePart.find({
-      categoryId: { $in: allCategoryIds },
+      categoryId: { $in: objectIds },
     })
       .populate("categoryId", "name")
       .lean();
 
-    // Always return array (empty if none found)
-    res.json(spareParts || []);
+    console.log("All category IDs:", allCategoryIds);
+    console.log("Found spare parts:", spareParts.length);
+
+    res.json(spareParts);
   } catch (err) {
     console.error("Failed to fetch spare parts by category:", err);
     res.status(500).json({ error: "Failed to fetch spare parts" });
