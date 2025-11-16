@@ -36,19 +36,10 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/auth", authRouter);
 app.use("/categories", categoryRoute);
 app.use("/spare-parts", sparePartsRouter);
-
 // Connect DB and start server
 connectDB()
-  .then(async () => {
+  .then(() => {
     console.log("Database connected...");
-
-    // Optional: insert test category if needed
-    try {
-      const cat = await category.create({ name: "test" });
-      console.log("Category inserted:", cat);
-    } catch (err) {
-      console.error("Failed to insert category:", err.message);
-    }
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on port ${PORT}`);
